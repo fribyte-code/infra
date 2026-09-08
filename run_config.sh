@@ -14,4 +14,4 @@ fi
 echo "Switching to friByte tailnet"
 tailscale switch headscale.fribyte.no
 
-ansible-playbook playbook_infra.yml --become-password-file .ansible_sudo_password
+ansible-playbook playbook_infra.yml --become-password-file .ansible_sudo_password --vault-password-file .ansible_vault_key
