@@ -1,0 +1,11 @@
+---
+- name: Common server roles
+  hosts: all
+  roles:
+    - common
+    - role: community.beszel.agent
+      vars:
+        agent_public_key: "{{ beszel_agent_public_key }}"
+        agent_token: "{{ beszel_agent_token }}"
+        agent_hub_url: "{{ beszel_agent_hub_url }}"
+  become: true

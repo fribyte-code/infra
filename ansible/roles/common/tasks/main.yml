@@ -1,0 +1,29 @@
+- name: Write message of the day script
+  ansible.builtin.template:
+    src: templates/99-fribyte-motd.j2
+    dest: /etc/update-motd.d/99-fribyte-motd
+    mode: "0744"
+  become: true
+
+- name: Write message of the day logo file
+  ansible.builtin.template:
+    src: templates/fribyte-logo.txt
+    dest: /etc/update-motd.d/fribyte-logo.txt
+    mode: "0644"
+  become: true
+
+- name: Write tmux config file
+  ansible.builtin.template:
+    src: templates/.tmux.conf
+    dest: "/home/{{ default_user }}"
+    mode: "0644"
+  become: false
+
+- name: Install common packages
+  ansible.builtin.apt:
+    pkg:
+      - htop
+      - ncdu
+      - nmap
+      - tmux
+      - dnsutils
