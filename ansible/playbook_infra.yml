@@ -9,3 +9,9 @@
         agent_token: "{{ beszel_agent_token }}"
         agent_hub_url: "{{ beszel_agent_hub_url }}"
   become: true
+
+- name: Kanidm host config
+  hosts: kanidm
+  roles:
+    - nginx
+    - kanidm
