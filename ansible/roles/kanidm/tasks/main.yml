@@ -1,5 +1,5 @@
 ---
-- name: Write copyparty container file
+- name: Write kanidm container file
   ansible.builtin.template:
     src: templates/kanidm.container
     dest: /etc/containers/systemd/
