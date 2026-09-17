@@ -12,6 +12,9 @@
 
 - name: Kanidm host config
   hosts: kanidm
+  pre_tasks:
+    - name: Install nginx
+      ansible.builtin.include_role:
+        name: nginxinc.nginx
   roles:
-    - nginx
     - kanidm
