@@ -18,3 +18,4 @@
         name: nginxinc.nginx
   roles:
     - kanidm
+  become: true

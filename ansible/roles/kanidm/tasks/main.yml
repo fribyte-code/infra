@@ -1,4 +1,12 @@
 ---
+- name: Install common packages
+  ansible.builtin.apt:
+    pkg:
+      - nginx
+      - nginx-module-acme
+    state: present
+  become: true
+
 - name: Write kanidm container file
   ansible.builtin.template:
     src: templates/kanidm.container
