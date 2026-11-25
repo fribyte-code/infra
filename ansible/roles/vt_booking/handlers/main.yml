@@ -1,0 +1,29 @@
+---
+- name: Restart docker
+  ansible.builtin.systemd_service:
+    name: docker
+    state: restarted
+  become: true
+
+# Same as `make prod-pull` in the app repository
+- name: Pull vt-booking images
+  ansible.builtin.command:
+    cmd: docker compose -f compose.prod.yaml pull backend frontend
+    chdir: "{{ vt_booking_dir }}"
+  changed_when: true
+  listen: Deploy vt-booking
+  become: true
+
+- name: Start vt-booking
+  ansible.builtin.command:
+    cmd: docker compose -f compose.prod.yaml up -d --no-build --wait
+    chdir: "{{ vt_booking_dir }}"
+  changed_when: true
+  listen: Deploy vt-booking
+  become: true
+
+- name: Restart nginx
+  ansible.builtin.systemd_service:
+    name: nginx
+    state: restarted
+  become: true
