@@ -44,10 +44,7 @@
     enabled: true
   become: true
 
-
-
-
-  - name: Check that the database password is set
+- name: Check that the database password is set
   ansible.builtin.assert:
     that:
       - vt_booking_db_password is defined
@@ -85,9 +82,7 @@
   notify: Deploy vt-booking
   become: true
 
-
-
-  - name: Write nginx config
+- name: Write nginx config
   ansible.builtin.template:
     src: templates/nginx.conf.j2
     dest: /etc/nginx/nginx.conf
@@ -96,8 +91,7 @@
   notify: Restart nginx
   become: true
 
-
-  - name: Create the backup directory
+- name: Create the backup directory
   ansible.builtin.file:
     path: /var/backups/vt-booking
     state: directory
