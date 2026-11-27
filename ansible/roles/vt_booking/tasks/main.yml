@@ -33,6 +33,7 @@
       - docker-compose-plugin
       - nginx-module-acme
       - make
+      - cron
     state: present
     update_cache: true
   become: true
@@ -116,6 +117,17 @@
 
 - name: Deploy pending changes
   ansible.builtin.meta: flush_handlers
+
+- name: Start vt-booking stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ vt_booking_dir }}"
+    files:
+      - compose.prod.yaml
+    state: present
+    pull: missing
+    build: never
+    wait: true
+  become: true
 
 - name: Read the gateway of the app's Docker network
   ansible.builtin.command:
