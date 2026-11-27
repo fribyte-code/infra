@@ -1,0 +1,14 @@
+#!/bin/sh
+# {{ ansible_managed }}
+# Nightly dump of the VT Booking database, as in docs/DEPLOYMENT.md in the app repository.
+set -eu
+
+cd {{ vt_booking_dir }}
+file=/var/backups/vt-booking/vt-booking-$(date +%F).dump
+
+# Write to a temporary file first, so a failed dump never replaces a good one
+docker compose -f compose.prod.yaml exec -T db pg_dump -U booking -Fc booking > "$file.tmp"
+mv "$file.tmp" "$file"
+
+# Keep 14 days
+find /var/backups/vt-booking -name 'vt-booking-*.dump' -mtime +14 -delete

@@ -19,3 +19,13 @@
   roles:
     - kanidm
   become: true
+
+- name: VT Booking host config
+  hosts: vt-booking
+  pre_tasks:
+    - name: Install nginx
+      ansible.builtin.include_role:
+        name: nginxinc.nginx
+  roles:
+    - vt_booking
+  become: true

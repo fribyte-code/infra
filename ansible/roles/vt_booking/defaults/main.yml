@@ -1,0 +1,17 @@
+---
+# Domenet. Bytter dere senere, endrer du bare denne
+vt_booking_domain: booking.fribyte.no
+
+# Hvor app-filene ligger på serveren
+vt_booking_dir: /opt/vt-booking
+
+# Hvilken versjon av imagene: latest, eller en commit-SHA
+vt_booking_image_tag: latest
+
+# Porten appens egen nginx lytter på, bare tilgjengelig fra serveren selv
+vt_booking_http_port: 8080
+
+# Fast adresseområde for Docker, så appens nettverk alltid får gateway 172.31.0.1
+vt_booking_docker_bip: 172.30.0.1/24
+vt_booking_docker_pool: 172.31.0.0/16
+vt_booking_trusted_proxy: 172.31.0.1

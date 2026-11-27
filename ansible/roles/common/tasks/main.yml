@@ -28,5 +28,4 @@
       - tmux
       - dnsutils
       - qemu-guest-agent
-      - podman
   become: true

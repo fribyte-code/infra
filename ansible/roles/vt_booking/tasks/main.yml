@@ -1,0 +1,143 @@
+---
+- name: Create the Docker config directory
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Write Docker daemon config
+  ansible.builtin.template:
+    src: templates/daemon.json.j2
+    dest: /etc/docker/daemon.json
+    mode: "0644"
+  notify: Restart docker
+  become: true
+
+- name: Add the Docker apt repository
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: deb
+    uris: https://download.docker.com/linux/debian
+    suites: "{{ ansible_facts['distribution_release'] }}"
+    components: stable
+    signed_by: https://download.docker.com/linux/debian/gpg
+  become: true
+
+- name: Install Docker, nginx ACME module and make
+  ansible.builtin.apt:
+    pkg:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+      - nginx-module-acme
+      - make
+      - cron
+    state: present
+    update_cache: true
+  become: true
+
+- name: Start Docker on boot
+  ansible.builtin.systemd_service:
+    name: docker
+    state: started
+    enabled: true
+  become: true
+
+- name: Check that the database password is set
+  ansible.builtin.assert:
+    that:
+      - vt_booking_db_password is defined
+      - vt_booking_db_password | length >= 32
+    fail_msg: Set vt_booking_db_password in group_vars/all.yml (openssl rand -hex 32)
+    quiet: true
+
+- name: Create the app directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ vt_booking_dir }}"
+    - "{{ vt_booking_dir }}/frontend"
+  become: true
+
+- name: Copy the app's compose file, Makefile and real-ip template
+  ansible.builtin.copy:
+    src: "files/{{ item.src }}"
+    dest: "{{ vt_booking_dir }}/{{ item.dest }}"
+    mode: "0644"
+  loop:
+    - { src: compose.prod.yaml, dest: compose.prod.yaml }
+    - { src: Makefile, dest: Makefile }
+    - { src: real-ip.conf.template, dest: frontend/real-ip.conf.template }
+  notify: Deploy vt-booking
+  become: true
+
+- name: Write the app's .env
+  ansible.builtin.template:
+    src: templates/env.j2
+    dest: "{{ vt_booking_dir }}/.env"
+    mode: "0600"
+  notify: Deploy vt-booking
+  become: true
+
+- name: Write nginx config
+  ansible.builtin.template:
+    src: templates/nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    mode: "0644"
+    validate: /usr/sbin/nginx -t -c %s
+  notify: Restart nginx
+  become: true
+
+- name: Create the backup directory
+  ansible.builtin.file:
+    path: /var/backups/vt-booking
+    state: directory
+    mode: "0700"
+  become: true
+
+- name: Write the backup script
+  ansible.builtin.template:
+    src: templates/vt-booking-backup.sh.j2
+    dest: /usr/local/sbin/vt-booking-backup
+    mode: "0755"
+  become: true
+
+- name: Back up the database every night
+  ansible.builtin.cron:
+    name: vt-booking backup
+    minute: "15"
+    hour: "3"
+    job: /usr/local/sbin/vt-booking-backup
+    user: root
+  become: true
+
+- name: Deploy pending changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Start vt-booking stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ vt_booking_dir }}"
+    files:
+      - compose.prod.yaml
+    state: present
+    pull: missing
+    build: never
+    wait: true
+  become: true
+
+- name: Read the gateway of the app's Docker network
+  ansible.builtin.command:
+    cmd: docker network inspect vt-booking-prod_default --format {% raw %}'{{ range .IPAM.Config }}{{ .Gateway }}{{ end }}'{% endraw %}
+  register: vt_booking_gateway
+  changed_when: false
+  become: true
+
+- name: Check that the gateway is the trusted proxy
+  ansible.builtin.assert:
+    that: vt_booking_gateway.stdout == vt_booking_trusted_proxy
+    fail_msg: "Gateway is {{ vt_booking_gateway.stdout }}, TRUSTED_PROXY is {{ vt_booking_trusted_proxy }}"
+    quiet: true
